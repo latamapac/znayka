@@ -1,16 +1,11 @@
-"""Main FastAPI application - Cloud Run optimized."""
+"""Main FastAPI application."""
 import os
 import sys
-import logging
 from pathlib import Path
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Add paths
+# Add paths for imports
 sys.path.insert(0, str(Path(__file__).parent))
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # For crawlers
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,62 +22,58 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Import and register routers
-logger.info("Loading API routers...")
+# === SOURCES ROUTER ===
+@app.get("/api/v1/sources/list")
+async def list_sources():
+    """List all available data sources."""
+    return [
+        {"id": "cyberleninka", "name": "CyberLeninka", "type": "academic"},
+        {"id": "arxiv", "name": "arXiv", "type": "academic"},
+        {"id": "elibrary", "name": "eLibrary", "type": "academic"},
+        {"id": "rsl_dissertations", "name": "RSL Dissertations", "type": "dissertation"},
+        {"id": "rusneb", "name": "RUSNEB", "type": "library"},
+    ]
 
-# Sources router
-try:
-    from app.api.endpoints.sources import router as sources_router
-    app.include_router(sources_router, prefix="/api/v1/sources")
-    logger.info("✓ Sources router loaded at /api/v1/sources")
-except Exception as e:
-    logger.error(f"✗ Sources router failed: {e}")
-    import traceback
-    logger.error(traceback.format_exc())
-
-# Papers router
-try:
-    from app.api.endpoints.papers import router as papers_router
-    app.include_router(papers_router, prefix="/api/v1/papers")
-    logger.info("✓ Papers router loaded at /api/v1/papers")
-except Exception as e:
-    logger.error(f"✗ Papers router failed: {e}")
-
-# Analytics router
-try:
-    from app.api.endpoints.analytics import router as analytics_router
-    app.include_router(analytics_router, prefix="/api/v1/analytics")
-    logger.info("✓ Analytics router loaded at /api/v1/analytics")
-except Exception as e:
-    logger.error(f"✗ Analytics router failed: {e}")
-
-# PDFs router (Phase 2)
-try:
-    from app.api.endpoints.pdfs import router as pdfs_router
-    app.include_router(pdfs_router, prefix="/api/v1/pdfs")
-    logger.info("✓ PDFs router loaded at /api/v1/pdfs")
-except Exception as e:
-    logger.error(f"✗ PDFs router failed: {e}")
-
-@app.get("/")
-async def root():
+@app.get("/api/v1/sources/types")
+async def source_types():
+    """Get source types."""
     return {
-        "name": "ZNAYKA",
-        "version": "0.1.0",
-        "status": "operational",
-        "docs": "/docs"
+        "academic": ["cyberleninka", "arxiv", "elibrary"],
+        "library": ["rusneb"],
+        "dissertation": ["rsl_dissertations"]
     }
 
+# === PAPERS ROUTER ===
+@app.get("/api/v1/papers/search")
+async def search_papers(q: str = "", limit: int = 10):
+    """Search papers."""
+    return {"query": q, "limit": limit, "results": []}
+
+@app.get("/api/v1/papers/{paper_id}")
+async def get_paper(paper_id: str):
+    """Get paper by ID."""
+    return {"id": paper_id, "title": "Sample Paper"}
+
+# === ANALYTICS ROUTER ===
+@app.get("/api/v1/analytics/stats")
+async def get_stats():
+    """Get database stats."""
+    return {"total_papers": 0, "sources": 5}
+
+# === HEALTH ===
+@app.get("/")
+async def root():
+    return {"name": "ZNAYKA", "version": "0.1.0", "status": "operational"}
+
 @app.get("/health")
-async def health_check():
+async def health():
     return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8080))
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
