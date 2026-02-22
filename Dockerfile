@@ -8,22 +8,16 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
-# Try light requirements first (CPU-only torch), fallback to minimal
-COPY backend/requirements*.txt ./
-RUN pip install --no-cache-dir -r backend/requirements.txt || \
-    pip install --no-cache-dir -r backend/requirements-light.txt || \
-    pip install --no-cache-dir -r backend/requirements-minimal.txt
+# Copy requirements first (for caching)
+COPY backend/requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY backend/ .
-
-# Make start script executable
-RUN chmod +x start-production.sh
 
 # Create storage directory
 RUN mkdir -p /app/storage/papers
 
 EXPOSE 8000
 
-CMD ["./start-production.sh"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
