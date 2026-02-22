@@ -33,7 +33,18 @@ gcloud config set run/region $REGION
 
 echo ""
 echo -e "${YELLOW}🔨 Building crawler container...${NC}"
-gcloud builds submit --tag gcr.io/$PROJECT_ID/znayka-crawler:latest -f Dockerfile.crawler .
+# Create temporary cloudbuild for crawler
+cat > cloudbuild.crawler.yaml << 'EOF'
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/znayka-crawler:latest', '-f', 'Dockerfile.crawler', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/znayka-crawler:latest']
+images:
+  - 'gcr.io/${PROJECT_ID}/znayka-crawler:latest'
+EOF
+gcloud builds submit --config=cloudbuild.crawler.yaml
+rm -f cloudbuild.crawler.yaml
 
 echo ""
 echo -e "${YELLOW}🚀 Creating 24/7 Cloud Run Job...${NC}"
