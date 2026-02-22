@@ -1223,3 +1223,43 @@ WARNING:  WatchFiles detected changes in 'app/main.py'. Reloading...
 INFO:     Started server process [28466]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/endpoints/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28466]
+Warning: Could not load some routers: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+Starting ZNAYKA v0.1.0
+WARNING:root:Could not load papers router: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+INFO:     Started server process [29945]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29945]
+Warning: Could not load some routers: No module named 'crawlers'
+Starting ZNAYKA v0.1.0
+WARNING:root:Could not load papers router: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+INFO:     Started server process [29949]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
