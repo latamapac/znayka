@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
 import PaperCard from '../components/PaperCard'
 import { paperApi } from '../services/api'
-import type { Paper, SearchFilters } from '../types/paper'
+
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -15,7 +15,7 @@ export default function SearchPage() {
   const query = searchParams.get('q') || ''
   const searchType = searchParams.get('type') || 'hybrid'
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['search', query, searchType, page],
     queryFn: () => paperApi.search(query, {
       limit,

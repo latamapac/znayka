@@ -1,4 +1,4 @@
-"""Main FastAPI application with Temporal crawler tracking."""
+"""Main FastAPI application with Temporal crawler tracking and Frontend API."""
 import os
 import sys
 import asyncio
@@ -13,7 +13,7 @@ from enum import Enum
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -116,18 +116,77 @@ tracker = CrawlTracker()
 
 
 # ==============================================================================
+# MOCK DATABASE (Replace with real PostgreSQL)
+# ==============================================================================
+
+MOCK_PAPERS = [
+    {
+        "id": "RSH-ARX-2024-00000001",
+        "title": "Deep Learning Approaches for Natural Language Processing",
+        "title_ru": "Методы глубокого обучения для обработки естественного языка",
+        "abstract": "This paper explores various deep learning architectures for NLP tasks.",
+        "source_type": "arxiv",
+        "source_url": "https://arxiv.org/abs/2401.001",
+        "journal": "arXiv Preprint",
+        "publication_year": 2024,
+        "keywords": ["deep learning", "NLP", "transformers"],
+        "authors": [{"id": "A1", "full_name": "John Smith", "affiliations": ["MIT"]}],
+        "citation_count": 45,
+        "citation_count_rsci": 12,
+        "language": "en",
+        "crawled_at": "2024-01-15T10:00:00Z",
+        "updated_at": "2024-01-15T10:00:00Z"
+    },
+    {
+        "id": "RSH-CL-2024-00000002",
+        "title": "Neural Networks in Medical Diagnosis",
+        "title_ru": "Нейронные сети в медицинской диагностике",
+        "abstract": "Application of neural networks for diagnostic imaging analysis.",
+        "source_type": "cyberleninka",
+        "source_url": "https://cyberleninka.ru/article/n/123",
+        "journal": "Medical AI Journal",
+        "publication_year": 2024,
+        "keywords": ["neural networks", "medicine", "AI"],
+        "authors": [{"id": "A2", "full_name": "Иван Петров", "full_name_ru": "Иван Петров", "affiliations": ["МГУ"]}],
+        "citation_count": 23,
+        "citation_count_rsci": 45,
+        "language": "ru",
+        "crawled_at": "2024-01-14T10:00:00Z",
+        "updated_at": "2024-01-14T10:00:00Z"
+    },
+    {
+        "id": "RSH-ELIB-2023-00000003",
+        "title": "Machine Learning in Economics",
+        "title_ru": "Машинное обучение в экономике",
+        "abstract": "Survey of ML applications in economic forecasting.",
+        "source_type": "elibrary",
+        "source_url": "https://elibrary.ru/item.asp?id=456",
+        "journal": "Russian Economic Journal",
+        "publication_year": 2023,
+        "keywords": ["machine learning", "economics", "forecasting"],
+        "authors": [{"id": "A3", "full_name": "Anna Kuznetsova", "full_name_ru": "Анна Кузнецова", "affiliations": ["ВШЭ"]}],
+        "citation_count": 67,
+        "citation_count_rsci": 89,
+        "language": "ru",
+        "crawled_at": "2024-01-13T10:00:00Z",
+        "updated_at": "2024-01-13T10:00:00Z"
+    }
+]
+
+
+# ==============================================================================
 # FASTAPI APP
 # ==============================================================================
 
 app = FastAPI(
     title="ZNAYKA",
     version="0.1.0",
-    description="ZNAYKA - Academic Paper Database with Temporal Crawler Tracking",
+    description="ZNAYKA - Academic Paper Database with Frontend API",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# CORS
+# CORS - Allow all for now (restrict in production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -149,6 +208,12 @@ class BulkCrawlRequest(BaseModel):
     sources: List[str]
     query: str
     limit: int = 30
+
+class SemanticSearchRequest(BaseModel):
+    query: str
+    limit: int = 20
+    offset: int = 0
+    filters: Optional[Dict] = None
 
 
 # ==============================================================================
@@ -203,7 +268,7 @@ async def run_crawl_job(job_id: str, source: str, query: str, limit: int):
 
 
 # ==============================================================================
-# ROUTES
+# ROUTES - ROOT & HEALTH
 # ==============================================================================
 
 @app.get("/")
@@ -214,16 +279,23 @@ async def root():
         "status": "operational",
         "crawler_tracking": "enabled",
         "sources_count": len(ALL_SOURCES),
-        "temporal_enabled": False  # Using in-memory tracker instead
+        "temporal_enabled": False
     }
 
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "tracker_jobs": len(tracker.jobs)}
+    summary = tracker.get_summary()
+    return {
+        "status": "healthy",
+        "tracker_jobs": len(tracker.jobs),
+        "papers_indexed": summary["total_papers_found"]
+    }
 
 
-# === SOURCES ROUTER ===
+# ==============================================================================
+# ROUTES - SOURCES
+# ==============================================================================
 
 @app.get("/api/v1/sources/list")
 async def list_sources():
@@ -249,34 +321,143 @@ async def get_source(source_id: str):
     raise HTTPException(status_code=404, detail="Source not found")
 
 
-# === PAPERS ROUTER ===
+# ==============================================================================
+# ROUTES - PAPERS (FRONTEND API)
+# ==============================================================================
 
 @app.get("/api/v1/papers/search")
-async def search_papers(q: str = "", limit: int = 10):
-    """Search papers."""
+async def search_papers(
+    q: str = Query(default="", description="Search query"),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    search_type: str = Query(default="hybrid", description="Search type: text, semantic, hybrid"),
+    year_from: Optional[int] = None,
+    year_to: Optional[int] = None,
+    source: Optional[str] = None,
+    journal: Optional[str] = None
+):
+    """Search papers - Frontend API format."""
+    # Filter mock papers based on query
+    results = MOCK_PAPERS
+    
+    if q:
+        q_lower = q.lower()
+        results = [p for p in results if 
+                   q_lower in p.get("title", "").lower() or
+                   q_lower in p.get("abstract", "").lower() or
+                   any(q_lower in kw.lower() for kw in p.get("keywords", []))]
+    
+    if source:
+        results = [p for p in results if p.get("source_type") == source]
+    
+    if year_from:
+        results = [p for p in results if p.get("publication_year", 0) >= year_from]
+    
+    if year_to:
+        results = [p for p in results if p.get("publication_year", 0) <= year_to]
+    
+    total = len(results)
+    paginated = results[offset:offset + limit]
+    
     return {
-        "query": q,
+        "papers": paginated,
+        "total": total,
         "limit": limit,
-        "results": [],
-        "total_found": 0,
-        "tracker_papers": tracker.get_summary()["total_papers_found"]
+        "offset": offset,
+        "search_type": search_type
     }
+
+
+@app.post("/api/v1/papers/semantic-search")
+async def semantic_search(request: SemanticSearchRequest):
+    """Semantic search - Frontend API format."""
+    # For now, return same as regular search
+    return await search_papers(
+        q=request.query,
+        limit=request.limit,
+        offset=request.offset,
+        search_type="semantic"
+    )
 
 
 @app.get("/api/v1/papers/{paper_id}")
 async def get_paper(paper_id: str):
-    """Get paper by ID."""
-    return {"id": paper_id, "title": "Sample Paper"}
+    """Get paper by ID - Frontend API format."""
+    for paper in MOCK_PAPERS:
+        if paper["id"] == paper_id:
+            return paper
+    raise HTTPException(status_code=404, detail="Paper not found")
 
 
-# === ANALYTICS ROUTER ===
+@app.get("/api/v1/papers/{paper_id}/similar")
+async def get_similar_papers(paper_id: str, limit: int = 10):
+    """Get similar papers - Frontend API format."""
+    # Return papers with same source type or keywords
+    target = None
+    for p in MOCK_PAPERS:
+        if p["id"] == paper_id:
+            target = p
+            break
+    
+    if not target:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    
+    # Find similar (same source type)
+    similar = [p for p in MOCK_PAPERS 
+               if p["id"] != paper_id and p.get("source_type") == target.get("source_type")]
+    
+    return {"papers": similar[:limit]}
+
+
+@app.get("/api/v1/papers/stats/index")
+async def get_index_stats():
+    """Get index stats - Frontend API format (IndexStats)."""
+    summary = tracker.get_summary()
+    
+    # Build by_source counts
+    by_source = {}
+    for source_id, stats in summary.get("sources", {}).items():
+        by_source[source_id] = stats.get("total_papers", 0)
+    
+    # Add mock data if empty
+    if not by_source:
+        by_source = {
+            "arxiv": 105,
+            "cyberleninka": 90,
+            "elibrary": 75,
+            "rusneb": 60,
+            "rsl_dissertations": 45,
+            "hse_scientometrics": 36,
+            "inion": 30,
+            "presidential_library": 24,
+            "rosstat_emiss": 15
+        }
+    
+    # Mock by_year data
+    by_year = {"2024": 245, "2023": 189, "2022": 46}
+    
+    total_papers = sum(by_source.values()) if by_source else 480
+    with_full_text = int(total_papers * 0.65)  # 65% have full text
+    
+    return {
+        "total_papers": total_papers,
+        "by_source": by_source,
+        "by_year": by_year,
+        "with_full_text": with_full_text,
+        "processing_coverage": (with_full_text / total_papers * 100) if total_papers > 0 else 0
+    }
+
+
+# ==============================================================================
+# ROUTES - ANALYTICS
+# ==============================================================================
 
 @app.get("/api/v1/analytics/stats")
 async def get_stats():
     """Get database and crawler stats."""
     summary = tracker.get_summary()
     return {
-        "total_papers": summary["total_papers_found"],
+        "total_papers": summary.get("total_papers_found", 480),
         "sources": len(ALL_SOURCES),
         "active_crawls": summary["status_counts"]["running"],
         "completed_crawls": summary["status_counts"]["completed"],
@@ -285,12 +466,13 @@ async def get_stats():
     }
 
 
-# === CRAWLER / TEMPORAL ROUTER ===
+# ==============================================================================
+# ROUTES - CRAWLER / WORKER
+# ==============================================================================
 
 @app.post("/api/v1/worker/crawl")
 async def start_crawl(request: CrawlRequest, background_tasks: BackgroundTasks):
     """Start a single crawler job."""
-    # Validate source
     valid_ids = [s["id"] for s in ALL_SOURCES]
     if request.source not in valid_ids:
         raise HTTPException(status_code=400, detail=f"Invalid source. Valid: {valid_ids}")
@@ -377,7 +559,9 @@ async def maintenance(background_tasks: BackgroundTasks):
     return {"status": "maintenance_started"}
 
 
-# === TEMPORAL-STYLE WORKFLOWS ===
+# ==============================================================================
+# ROUTES - TEMPORAL WORKFLOWS
+# ==============================================================================
 
 @app.get("/api/v1/workflows/crawl-status")
 async def workflow_crawl_status():
@@ -389,7 +573,7 @@ async def workflow_crawl_status():
         "run_id": "in-memory",
         "status": "COMPLETED" if summary["is_complete"] else "RUNNING",
         "progress": {
-            "total_sources": 9,
+            "total_sources": len(ALL_SOURCES),
             "completed": summary["status_counts"]["completed"],
             "running": summary["status_counts"]["running"],
             "failed": summary["status_counts"]["failed"],

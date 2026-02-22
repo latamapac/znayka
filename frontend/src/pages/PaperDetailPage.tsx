@@ -129,7 +129,7 @@ export default function PaperDetailPage() {
             )}
 
             {/* Keywords */}
-            {(paper.keywords?.length > 0 || paper.keywords_ru?.length > 0) && (
+            {((paper.keywords && paper.keywords.length > 0) || (paper.keywords_ru && paper.keywords_ru.length > 0)) && (
               <div className="mb-6">
                 <h2 className="text-sm font-medium text-gray-500 mb-2">Ключевые слова</h2>
                 <div className="flex flex-wrap gap-2">
