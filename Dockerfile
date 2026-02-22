@@ -18,6 +18,9 @@ COPY backend/ .
 # Create storage directory
 RUN mkdir -p /app/storage/papers
 
-EXPOSE 8000
+# Cloud Run uses PORT env var (default 8080)
+ENV PORT=8080
+EXPOSE 8080
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use shell form to expand $PORT
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
