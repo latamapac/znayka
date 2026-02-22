@@ -174,3 +174,59 @@ class Citation(Base):
     __table_args__ = (
         Index('idx_citations_unique', 'citing_paper_id', 'cited_paper_id', unique=True),
     )
+
+
+class PaperChunk(Base):
+    """Text chunks from papers for granular search."""
+    
+    __tablename__ = "paper_chunks"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    paper_id = Column(String(32), ForeignKey("papers.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Chunk content
+    text = Column(Text, nullable=False)
+    text_embedding = Column(Vector(768), nullable=True)  # Vertex AI dimension
+    
+    # Metadata
+    page_number = Column(Integer, nullable=True)
+    chunk_index = Column(Integer, nullable=False)
+    char_count = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    paper = relationship("Paper", backref="chunks")
+    
+    __table_args__ = (
+        Index('idx_paper_chunks_embedding', 'text_embedding', postgresql_using='ivfflat'),
+    )
+
+
+class PDFStorage(Base):
+    """Track PDF storage locations."""
+    
+    __tablename__ = "pdf_storage"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    paper_id = Column(String(32), ForeignKey("papers.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    
+    # Storage info
+    storage_type = Column(String(20), nullable=False)  # 'r2', 's3', 'local'
+    storage_key = Column(String(200), nullable=False)  # path or key
+    storage_url = Column(Text, nullable=True)  # public URL if available
+    
+    # File info
+    filename = Column(String(200), nullable=True)
+    size_bytes = Column(Integer, nullable=True)
+    checksum = Column(String(64), nullable=True)  # SHA256
+    
+    # Processing status
+    is_downloaded = Column(Integer, default=0)
+    is_processed = Column(Integer, default=0)
+    extracted_text_length = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

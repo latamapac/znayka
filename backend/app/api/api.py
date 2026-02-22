@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from app.api.endpoints import papers_router
 from app.api.endpoints.sources import router as sources_router
 from app.api.endpoints.analytics import router as analytics_router
+from app.api.endpoints.pdfs import router as pdfs_router
 
 api_router = APIRouter()
 
@@ -26,4 +27,11 @@ api_router.include_router(
     analytics_router,
     prefix="/analytics",
     tags=["analytics"]
+)
+
+# Include PDF routes (NEW!)
+api_router.include_router(
+    pdfs_router,
+    prefix="/pdfs",
+    tags=["pdfs"]
 )
