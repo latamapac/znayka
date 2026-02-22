@@ -18,6 +18,12 @@ echo "📋 Setting project..."
 gcloud config set project $PROJECT_ID
 echo ""
 
+# Enable Cloud Build API
+echo "🔧 Enabling Cloud Build API..."
+gcloud services enable cloudbuild.googleapis.com --quiet
+echo "✅ Cloud Build enabled"
+echo ""
+
 # Wait for Cloud SQL
 echo "🗄️  Checking Cloud SQL..."
 MAX_RETRIES=30
@@ -34,7 +40,7 @@ while true; do
         sleep 10
         RETRY_COUNT=$((RETRY_COUNT+1))
         
-        if [ $RETRY_COUNT -ge $MAX_RTRIES ]; then
+        if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
             echo "⚠️  Timeout. Check status:"
             echo "   gcloud sql instances describe znayka-db"
             exit 1
