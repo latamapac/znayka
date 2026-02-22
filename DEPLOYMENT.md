@@ -1,8 +1,8 @@
-# Deployment Guide - Russian Science Hub
+# Deployment Guide - ZNAYKA
 
 ## Overview
 
-This guide covers deploying the Russian Science Hub to Railway and setting up Temporal.io for crawler orchestration.
+This guide covers deploying the ZNAYKA to Railway and setting up Temporal.io for crawler orchestration.
 
 ## Railway Deployment
 

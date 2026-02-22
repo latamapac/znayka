@@ -5,15 +5,15 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: sciencehub
-      POSTGRES_PASSWORD: sciencehub
-      POSTGRES_DB: sciencehub
+      POSTGRES_USER: znayka
+      POSTGRES_PASSWORD: znayka
+      POSTGRES_DB: znayka
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sciencehub"]
+      test: ["CMD-SHELL", "pg_isready -U znayka"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,8 +32,8 @@ services:
     environment:
       - DB=postgresql
       - DB_PORT=5432
-      - POSTGRES_USER=sciencehub
-      - POSTGRES_PWD=sciencehub
+      - POSTGRES_USER=znayka
+      - POSTGRES_PWD=znayka
       - POSTGRES_SEEDS=postgres
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
     ports:
@@ -59,7 +59,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+asyncpg://sciencehub:sciencehub@postgres:5432/sciencehub
+      - DATABASE_URL=postgresql+asyncpg://znayka:znayka@postgres:5432/znayka
       - REDIS_URL=redis://redis:6379/0
       - TEMPORAL_HOST=temporal:7233
       - USE_TEMPORAL=true
@@ -86,7 +86,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+asyncpg://sciencehub:sciencehub@postgres:5432/sciencehub
+      - DATABASE_URL=postgresql+asyncpg://znayka:znayka@postgres:5432/znayka
       - REDIS_URL=redis://redis:6379/0
       - TEMPORAL_HOST=temporal:7233
       - USE_SQLITE=false

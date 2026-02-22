@@ -1,4 +1,4 @@
-# Russian Science Hub - Project Summary
+# ZNAYKA - Project Summary
 
 ## ✅ What's Included
 

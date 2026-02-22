@@ -21,3 +21,15 @@ Shutting down Russian Science Hub
 INFO:     Started server process [9968]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/core/config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9968]
+Starting Russian Science Hub v0.1.0
+Temporal worker started
+Temporal worker stopped
+Shutting down Russian Science Hub
+INFO:     Started server process [10177]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

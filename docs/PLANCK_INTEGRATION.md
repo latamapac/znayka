@@ -99,7 +99,7 @@ export const analyticsManifest: ModuleManifest = {
 ## Архитектура
 
 ```
-Russian Science Hub          Planck Platform
+ZNAYKA          Planck Platform
         │                          │
         ├─► API Request ───────────┤
         │                          ▼

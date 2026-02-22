@@ -1,4 +1,4 @@
-# Russian Science Hub (Российский Научный Хаб)
+# ZNAYKA (Знайка — Научный Хаб)
 
 A comprehensive academic paper database and search platform for Russian scientific research. This project aims to aggregate, index, and make searchable all academic papers from Russian universities, research institutions, and academic journals.
 
@@ -27,7 +27,7 @@ Create a unified, open-access platform where:
 ## 📁 Project Structure
 
 ```
-russian-science-hub/
+znayka/
 ├── backend/           # FastAPI backend
 │   ├── app/
 │   │   ├── api/       # API routes
@@ -84,7 +84,7 @@ railway up
 ```bash
 # Clone and setup
 git clone <repo-url>
-cd russian-science-hub
+cd znayka
 
 # Start all services
 make setup
@@ -170,7 +170,7 @@ Example: RSH-ELIB-2024-00012345
 ```
 
 Where:
-- `RSH` - Russian Science Hub prefix
+- `RSH` - ZNAYKA prefix
 - `ELIB` - Source code (eLibrary)
 - `2024` - Publication year
 - `00012345` - Sequential ID

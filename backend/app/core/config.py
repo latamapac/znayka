@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # API
     API_V1_PREFIX: str = "/api/v1"
-    PROJECT_NAME: str = "Russian Science Hub"
+    PROJECT_NAME: str = "ZNAYKA"
     PROJECT_VERSION: str = "0.1.0"
     PORT: int = 8000
     
