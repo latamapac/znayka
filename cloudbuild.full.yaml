@@ -1,0 +1,19 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/znayka:full'
+      - '-f'
+      - 'Dockerfile.full'
+      - '.'
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/znayka:full'
+
+images:
+  - 'gcr.io/$PROJECT_ID/znayka:full'
+
+timeout: '1800s'

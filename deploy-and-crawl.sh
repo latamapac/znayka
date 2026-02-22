@@ -14,7 +14,8 @@ echo ""
 
 # Step 1: Build with PDF features
 echo "🔨 Step 1: Building with PDF features..."
-gcloud builds submit --tag gcr.io/$PROJECT_ID/znayka:full -f Dockerfile.full
+# Build with cloudbuild.full.yaml
+gcloud builds submit --config=cloudbuild.full.yaml
 echo "✅ Build complete"
 echo ""
 
