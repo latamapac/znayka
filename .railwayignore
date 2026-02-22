@@ -1,0 +1,27 @@
+# Ignore for Railway deployment
+node_modules
+__pycache__
+*.pyc
+.git
+.vscode
+.idea
+
+# Local env files
+.env
+.env.local
+
+# Storage (will use Railway volumes)
+storage/papers/*.pdf
+storage/logs/
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+
+# Docs (keep for reference, but not needed for runtime)
+docs/
+
+# Local development
+venv/
+.venv/

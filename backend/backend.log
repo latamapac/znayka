@@ -1,0 +1,23 @@
+INFO:     Will watch for changes in these directories: ['/Users/mark/russian-science-hub/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     Started reloader process [9577] using WatchFiles
+INFO:     Started server process [9580]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+Starting Russian Science Hub v0.1.0
+Temporal worker started
+INFO:     127.0.0.1:62114 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62123 - "GET /api/v1/translation/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49705 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49715 - "GET /api/v1/translation/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49871 - "POST /api/v1/translation/text HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/temporal/worker.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9580]
+Error stopping Temporal worker: Failed client connect: Server connection error: tonic::transport::Error(Transport, hyper::Error(Connect, ConnectError("tcp connect error", Os { code: 61, kind: ConnectionRefused, message: "Connection refused" })))
+Shutting down Russian Science Hub
+INFO:     Started server process [9968]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

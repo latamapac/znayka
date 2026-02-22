@@ -1,0 +1,118 @@
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: sciencehub
+      POSTGRES_PASSWORD: sciencehub
+      POSTGRES_DB: sciencehub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sciencehub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Temporal Server
+  temporal:
+    image: temporalio/auto-setup:1.22.4
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=sciencehub
+      - POSTGRES_PWD=sciencehub
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - "7233:7233"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Temporal UI
+  temporal-ui:
+    image: temporalio/ui:2.21.3
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8233:8080"
+    depends_on:
+      - temporal
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://sciencehub:sciencehub@postgres:5432/sciencehub
+      - REDIS_URL=redis://redis:6379/0
+      - TEMPORAL_HOST=temporal:7233
+      - USE_TEMPORAL=true
+      - USE_SQLITE=false
+      - DEBUG=true
+      - PORT=8000
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./backend:/app
+      - ./crawlers:/app/crawlers
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      temporal:
+        condition: service_started
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Temporal Worker (separate service)
+  temporal-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://sciencehub:sciencehub@postgres:5432/sciencehub
+      - REDIS_URL=redis://redis:6379/0
+      - TEMPORAL_HOST=temporal:7233
+      - USE_SQLITE=false
+    volumes:
+      - ./backend:/app
+      - ./crawlers:/app/crawlers
+    depends_on:
+      - temporal
+      - postgres
+    command: python -m app.temporal.worker
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
