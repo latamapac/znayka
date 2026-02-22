@@ -1460,3 +1460,19 @@ INFO:     Finished server process [35249]
 INFO:     Started server process [35276]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/database_real.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [35276]
+INFO:     Started server process [36904]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/pdf_manager.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [36904]
+INFO:     Started server process [36919]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
