@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install minimal deps
+RUN pip install fastapi uvicorn
+
+# Create minimal app inline
+RUN echo 'from fastapi import FastAPI; app = FastAPI(title="ZNAYKA")' > /app/main.py && \
+    echo '@app.get("/")' >> /app/main.py && \
+    echo 'def root(): return {"name": "ZNAYKA", "status": "ok"}' >> /app/main.py && \
+    echo '@app.get("/health")' >> /app/main.py && \
+    echo 'def health(): return {"status": "healthy"}' >> /app/main.py
+
+EXPOSE 8080
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
