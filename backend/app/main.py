@@ -119,59 +119,73 @@ tracker = CrawlTracker()
 # MOCK DATABASE (Replace with real PostgreSQL)
 # ==============================================================================
 
-MOCK_PAPERS = [
-    {
-        "id": "RSH-ARX-2024-00000001",
-        "title": "Deep Learning Approaches for Natural Language Processing",
-        "title_ru": "Методы глубокого обучения для обработки естественного языка",
-        "abstract": "This paper explores various deep learning architectures for NLP tasks.",
-        "source_type": "arxiv",
-        "source_url": "https://arxiv.org/abs/2401.001",
-        "journal": "arXiv Preprint",
-        "publication_year": 2024,
-        "keywords": ["deep learning", "NLP", "transformers"],
-        "authors": [{"id": "A1", "full_name": "John Smith", "affiliations": ["MIT"]}],
-        "citation_count": 45,
-        "citation_count_rsci": 12,
-        "language": "en",
-        "crawled_at": "2024-01-15T10:00:00Z",
-        "updated_at": "2024-01-15T10:00:00Z"
-    },
-    {
-        "id": "RSH-CL-2024-00000002",
-        "title": "Neural Networks in Medical Diagnosis",
-        "title_ru": "Нейронные сети в медицинской диагностике",
-        "abstract": "Application of neural networks for diagnostic imaging analysis.",
-        "source_type": "cyberleninka",
-        "source_url": "https://cyberleninka.ru/article/n/123",
-        "journal": "Medical AI Journal",
-        "publication_year": 2024,
-        "keywords": ["neural networks", "medicine", "AI"],
-        "authors": [{"id": "A2", "full_name": "Иван Петров", "full_name_ru": "Иван Петров", "affiliations": ["МГУ"]}],
-        "citation_count": 23,
-        "citation_count_rsci": 45,
-        "language": "ru",
-        "crawled_at": "2024-01-14T10:00:00Z",
-        "updated_at": "2024-01-14T10:00:00Z"
-    },
-    {
-        "id": "RSH-ELIB-2023-00000003",
-        "title": "Machine Learning in Economics",
-        "title_ru": "Машинное обучение в экономике",
-        "abstract": "Survey of ML applications in economic forecasting.",
-        "source_type": "elibrary",
-        "source_url": "https://elibrary.ru/item.asp?id=456",
-        "journal": "Russian Economic Journal",
-        "publication_year": 2023,
-        "keywords": ["machine learning", "economics", "forecasting"],
-        "authors": [{"id": "A3", "full_name": "Anna Kuznetsova", "full_name_ru": "Анна Кузнецова", "affiliations": ["ВШЭ"]}],
-        "citation_count": 67,
-        "citation_count_rsci": 89,
-        "language": "ru",
-        "crawled_at": "2024-01-13T10:00:00Z",
-        "updated_at": "2024-01-13T10:00:00Z"
-    }
-]
+# Load large mock dataset for searchable database
+def load_mock_papers():
+    """Load mock papers from file or generate minimal set"""
+    import json
+    from pathlib import Path
+    
+    mock_file = Path(__file__).parent / "mock_papers_large.json"
+    if mock_file.exists():
+        with open(mock_file) as f:
+            return json.load(f)
+    
+    # Fallback minimal set
+    return [
+        {
+            "id": "RSH-ARX-2024-00000001",
+            "title": "Deep Learning Approaches for Natural Language Processing",
+            "title_ru": "Методы глубокого обучения для обработки естественного языка",
+            "abstract": "This paper explores various deep learning architectures for NLP tasks.",
+            "source_type": "arxiv",
+            "source_url": "https://arxiv.org/abs/2401.001",
+            "journal": "arXiv Preprint",
+            "publication_year": 2024,
+            "keywords": ["deep learning", "NLP", "transformers"],
+            "authors": [{"id": "A1", "full_name": "John Smith", "affiliations": ["MIT"]}],
+            "citation_count": 45,
+            "citation_count_rsci": 12,
+            "language": "en",
+            "crawled_at": "2024-01-15T10:00:00Z",
+            "updated_at": "2024-01-15T10:00:00Z"
+        },
+        {
+            "id": "RSH-CL-2024-00000002",
+            "title": "Neural Networks in Medical Diagnosis",
+            "title_ru": "Нейронные сети в медицинской диагностике",
+            "abstract": "Application of neural networks for diagnostic imaging analysis.",
+            "source_type": "cyberleninka",
+            "source_url": "https://cyberleninka.ru/article/n/123",
+            "journal": "Medical AI Journal",
+            "publication_year": 2024,
+            "keywords": ["neural networks", "medicine", "AI"],
+            "authors": [{"id": "A2", "full_name": "Иван Петров", "full_name_ru": "Иван Петров", "affiliations": ["МГУ"]}],
+            "citation_count": 23,
+            "citation_count_rsci": 45,
+            "language": "ru",
+            "crawled_at": "2024-01-14T10:00:00Z",
+            "updated_at": "2024-01-14T10:00:00Z"
+        },
+        {
+            "id": "RSH-ELIB-2023-00000003",
+            "title": "Machine Learning in Economics",
+            "title_ru": "Машинное обучение в экономике",
+            "abstract": "Survey of ML applications in economic forecasting.",
+            "source_type": "elibrary",
+            "source_url": "https://elibrary.ru/item.asp?id=456",
+            "journal": "Russian Economic Journal",
+            "publication_year": 2023,
+            "keywords": ["machine learning", "economics", "forecasting"],
+            "authors": [{"id": "A3", "full_name": "Anna Kuznetsova", "full_name_ru": "Анна Кузнецова", "affiliations": ["ВШЭ"]}],
+            "citation_count": 67,
+            "citation_count_rsci": 89,
+            "language": "ru",
+            "crawled_at": "2024-01-13T10:00:00Z",
+            "updated_at": "2024-01-13T10:00:00Z"
+        }
+    ]
+
+MOCK_PAPERS = load_mock_papers()
 
 
 # ==============================================================================
