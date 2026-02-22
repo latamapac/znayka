@@ -1,26 +1,25 @@
 #!/bin/bash
-# ZNAYKA Deploy Script for Google Cloud
-# Project: znayka-science
+# ZNAYKA Deploy Script - Simple version (no Vertex AI)
 
 set -e
 
 export PROJECT_ID=znayka-science
 export REGION=us-central1
 
-echo "🚀 Deploying ZNAYKA to Google Cloud"
+echo "🚀 Deploying ZNAYKA to Google Cloud (Simple Mode)"
 echo "Project: $PROJECT_ID"
 echo "Region: $REGION"
 echo ""
 
-# 1. Set project
+# Set project
 echo "📋 Setting project..."
 gcloud config set project $PROJECT_ID
 
-# 2. Enable APIs
+# Enable basic APIs only (no aiplatform)
 echo "🔧 Enabling APIs..."
-gcloud services enable run sqladmin aiplatform storage cloudbuild
+gcloud services enable run sqladmin cloudbuild
 
-# 3. Check if database exists
+# Create database
 echo "🗄️  Checking database..."
 if gcloud sql instances describe znayka-db --quiet 2>/dev/null; then
     echo "✅ Database already exists"
@@ -30,17 +29,15 @@ else
         --database-version=POSTGRES_15 \
         --tier=db-f1-micro \
         --region=$REGION \
-        --storage-size=10GB \
-        --availability-type=zonal
+        --storage-size=10GB
     
-    echo "📝 Creating database..."
     gcloud sql databases create znayka --instance=znayka-db
 fi
 
 export DB_CONNECTION=$(gcloud sql instances describe znayka-db --format='value(connectionName)')
 echo "📍 DB Connection: $DB_CONNECTION"
 
-# 4. Check/create service account
+# Service account
 echo "🔐 Checking service account..."
 if gcloud iam service-accounts describe znayka-sa@$PROJECT_ID.iam.gserviceaccount.com --quiet 2>/dev/null; then
     echo "✅ Service account exists"
@@ -52,17 +49,14 @@ else
     gcloud projects add-iam-policy-binding $PROJECT_ID \
         --member="serviceAccount:znayka-sa@$PROJECT_ID.iam.gserviceaccount.com" \
         --role="roles/cloudsql.client"
-    
-    gcloud projects add-iam-policy-binding $PROJECT_ID \
-        --member="serviceAccount:znayka-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-        --role="roles/aiplatform.user"
 fi
 
-# 5. Build
+# Build with simple Dockerfile (no Vertex AI)
 echo "🔨 Building container..."
-gcloud builds submit --tag gcr.io/$PROJECT_ID/znayka
+docker build -f Dockerfile.simple -t gcr.io/$PROJECT_ID/znayka .
+docker push gcr.io/$PROJECT_ID/znayka
 
-# 6. Deploy
+# Deploy
 echo "🚀 Deploying to Cloud Run..."
 gcloud run deploy znayka \
     --image gcr.io/$PROJECT_ID/znayka \
@@ -71,19 +65,17 @@ gcloud run deploy znayka \
     --allow-unauthenticated \
     --service-account=znayka-sa@$PROJECT_ID.iam.gserviceaccount.com \
     --add-cloudsql-instances=$DB_CONNECTION \
-    --set-env-vars="DATABASE_URL=postgresql+asyncpg://znayka:znayka@/znayka?host=/cloudsql/$DB_CONNECTION,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,USE_SQLITE=false" \
-    --memory=2Gi \
-    --cpu=2 \
-    --max-instances=10
+    --set-env-vars="DATABASE_URL=postgresql+asyncpg://znayka:znayka@/znayka?host=/cloudsql/$DB_CONNECTION,USE_SQLITE=false" \
+    --memory=1Gi \
+    --cpu=1 \
+    --max-instances=5
 
-# 7. Get URL
+# Get URL
 echo ""
 echo "✅ DEPLOYMENT COMPLETE!"
 echo ""
 export SERVICE_URL=$(gcloud run services describe znayka --region=$REGION --format='value(status.url)')
 echo "🌐 URL: $SERVICE_URL"
 echo ""
-echo "Test it:"
-echo "  curl $SERVICE_URL/health"
-echo ""
-echo "API Docs: $SERVICE_URL/docs"
+echo "Test: curl $SERVICE_URL/health"
+echo "Docs: $SERVICE_URL/docs"

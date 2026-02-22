@@ -1,10 +1,10 @@
 #!/bin/bash
 # ZNAYKA Deploy Script for Google Cloud
-# Project: znayka-science
+# Project: project-81f8f179-6791-4514-918
 
 set -e
 
-export PROJECT_ID=znayka-science
+export PROJECT_ID=project-81f8f179-6791-4514-918
 export REGION=us-central1
 
 echo "🚀 Deploying ZNAYKA to Google Cloud"
