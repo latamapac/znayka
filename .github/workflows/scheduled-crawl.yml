@@ -1,0 +1,54 @@
+name: Scheduled Crawl
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      query:
+        description: 'Search query (optional)'
+        required: false
+        default: ''
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    name: Run ZNAYKA Crawler
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install aiohttp
+        
+    - name: Run crawler for all sources
+      run: |
+        echo "🚀 Starting ZNAYKA automatic crawl..."
+        echo "API: https://znayka-674193695957.europe-north1.run.app"
+        echo "Frontend: https://znayka-frontend.vercel.app"
+        echo ""
+        
+        # Run the crawler manager with specific queries
+        python3 auto-crawler-manager.py --limit 50 --mode once || true
+        
+    - name: Check database stats
+      run: |
+        echo ""
+        echo "📊 Final database stats:"
+        curl -s https://znayka-674193695957.europe-north1.run.app/api/v1/papers/stats/index | python3 -m json.tool
+        
+    - name: Save crawl report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: crawl-report
+        path: crawl-report-*.json
+        retention-days: 30

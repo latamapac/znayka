@@ -1,0 +1,35 @@
+{
+  "stats": {
+    "total_crawls": 0,
+    "papers_found": 0,
+    "sources_completed": {
+      "arxiv": 0,
+      "cyberleninka": 0,
+      "elibrary": 0,
+      "rsl_dissertations": 0,
+      "rusneb": 0,
+      "inion": 0,
+      "hse_scientometrics": 0,
+      "presidential_library": 0,
+      "rosstat_emiss": 0
+    },
+    "queries_completed": [],
+    "start_time": "2026-02-22T19:53:01.318272",
+    "errors": [
+      {
+        "query": "quantum computing",
+        "error": "Cannot connect to host znayka-674193695957.europe-north1.run.app:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]"
+      },
+      {
+        "query": "blockchain technology",
+        "error": "Cannot connect to host znayka-674193695957.europe-north1.run.app:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]"
+      },
+      {
+        "query": "climate change",
+        "error": "Cannot connect to host znayka-674193695957.europe-north1.run.app:443 ssl:True [SSLCertVerificationError: (1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')]"
+      }
+    ]
+  },
+  "final_database": {},
+  "completed_pairs": []
+}
