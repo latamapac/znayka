@@ -69,14 +69,14 @@ echo ""
 
 # BUILD WITH CLOUD BUILD (no local Docker needed)
 echo "🔨 Building with Cloud Build..."
-gcloud builds submit --tag gcr.io/$PROJECT_ID/znayka --timeout=20m
+gcloud builds submit --config=cloudbuild.yaml --timeout=20m
 echo "✅ Build complete"
 echo ""
 
 # DEPLOY
 echo "🚀 Deploying to Cloud Run..."
 gcloud run deploy znayka \
-    --image gcr.io/$PROJECT_ID/znayka \
+    --image gcr.io/$PROJECT_ID/znayka:latest \
     --platform managed \
     --region=$REGION \
     --allow-unauthenticated \
