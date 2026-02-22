@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: znayka
+      POSTGRES_PASSWORD: znayka
+      POSTGRES_DB: znayka
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://znayka:znayka@postgres:5432/znayka
+      - USE_SQLITE=false
+      - SEED_DATABASE=true
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8080:8000"
+    depends_on:
+      - postgres
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 4G
+
+volumes:
+  postgres_data:

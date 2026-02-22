@@ -9,8 +9,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python dependencies
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Try light requirements first (CPU-only torch), fallback to minimal
+COPY backend/requirements*.txt ./
+RUN pip install --no-cache-dir -r backend/requirements.txt || \
+    pip install --no-cache-dir -r backend/requirements-light.txt || \
+    pip install --no-cache-dir -r backend/requirements-minimal.txt
 
 # Copy application code
 COPY backend/ .
