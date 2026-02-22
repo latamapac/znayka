@@ -5,6 +5,7 @@ import SearchPage from './pages/SearchPage'
 import PaperDetailPage from './pages/PaperDetailPage'
 import AboutPage from './pages/AboutPage'
 import StatsPage from './pages/StatsPage'
+import MonitorPage from './pages/MonitorPage'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/paper/:id" element={<PaperDetailPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/stats" element={<StatsPage />} />
+        <Route path="/monitor" element={<MonitorPage />} />
       </Routes>
     </Layout>
   )

@@ -610,6 +610,126 @@ async def workflow_crawl_status():
 
 
 # ==============================================================================
+# ROUTES - LIVE MONITOR & REAL-TIME FEED
+# ==============================================================================
+
+@app.get("/api/v1/monitor/live")
+async def get_live_monitor():
+    """
+    Get live monitoring stats - real-time database activity
+    """
+    from app.monitor import live_monitor
+    
+    stats = await live_monitor.get_live_stats()
+    
+    # Add extra info
+    summary = tracker.get_summary()
+    
+    return {
+        "live_stats": stats,
+        "crawler_summary": {
+            "total_jobs": summary["total_jobs"],
+            "status_counts": summary["status_counts"],
+            "is_complete": summary["is_complete"]
+        },
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/api/v1/monitor/recent-papers")
+async def get_recent_papers(limit: int = Query(default=20, ge=1, le=100)):
+    """
+    Get recently added papers - live feed
+    """
+    from app.monitor import live_monitor
+    
+    papers = await live_monitor.get_recent_papers(limit)
+    
+    return {
+        "papers": papers,
+        "total_available": len(live_monitor.recent_papers),
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/api/v1/monitor/crawl-history")
+async def get_crawl_history(limit: int = Query(default=50, ge=1, le=200)):
+    """
+    Get crawl history with results
+    """
+    from app.monitor import live_monitor
+    
+    history = await live_monitor.get_crawl_history(limit)
+    
+    return {
+        "history": history,
+        "count": len(history),
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+@app.get("/api/v1/monitor/sse")
+async def monitor_sse():
+    """
+    Server-Sent Events endpoint for live updates
+    Streams real-time updates as they happen
+    """
+    from app.monitor import live_monitor
+    from fastapi.responses import StreamingResponse
+    
+    async def event_generator():
+        queue = await live_monitor.subscribe()
+        try:
+            # Send initial data
+            stats = await live_monitor.get_live_stats()
+            yield f"data: {json.dumps({'type': 'initial', 'data': stats})}\n\n"
+            
+            # Stream updates
+            while True:
+                try:
+                    message = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    yield f"data: {json.dumps(message)}\n\n"
+                except asyncio.TimeoutError:
+                    # Send heartbeat
+                    yield f"data: {json.dumps({'type': 'heartbeat', 'timestamp': datetime.now().isoformat()})}\n\n"
+        except asyncio.CancelledError:
+            pass
+        finally:
+            await live_monitor.unsubscribe(queue)
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable Nginx buffering
+        }
+    )
+
+
+@app.post("/api/v1/monitor/notify-paper")
+async def notify_new_paper(paper: dict):
+    """
+    Internal endpoint to notify monitor of new paper
+    Called by crawlers when they find papers
+    """
+    from app.monitor import live_monitor
+    await live_monitor.add_paper(paper)
+    return {"status": "notified"}
+
+
+@app.post("/api/v1/monitor/reset-daily")
+async def reset_daily_stats():
+    """
+    Reset daily counters - should be called by scheduler at midnight
+    """
+    from app.monitor import live_monitor
+    await live_monitor.reset_daily_stats()
+    return {"status": "reset", "type": "daily"}
+
+
+# ==============================================================================
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8080))

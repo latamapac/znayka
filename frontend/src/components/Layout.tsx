@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Search, BookOpen, BarChart3, Info, Menu, X } from 'lucide-react'
+import { Search, BookOpen, BarChart3, Info, Menu, X, Activity } from 'lucide-react'
 import { useState } from 'react'
 
 interface LayoutProps {
@@ -15,6 +15,7 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/', label: 'Главная', icon: BookOpen },
     { path: '/search', label: 'Поиск', icon: Search },
     { path: '/stats', label: 'Статистика', icon: BarChart3 },
+    { path: '/monitor', label: 'Монитор', icon: Activity },
     { path: '/about', label: 'О проекте', icon: Info },
   ]
 
