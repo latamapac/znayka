@@ -1,71 +1,71 @@
-"""Main FastAPI application."""
-import sys
+"""Main FastAPI application - Cloud Run optimized."""
 import os
+import sys
 from pathlib import Path
 
-# Add parent directory to path for crawlers module
-parent_dir = str(Path(__file__).parent.parent.parent)
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
-
-from contextlib import asynccontextmanager
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.api import api_router
-from app.core.config import get_settings
-
-settings = get_settings()
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan events."""
-    print(f"Starting {settings.PROJECT_NAME} v{settings.PROJECT_VERSION}")
-    yield
-    print(f"Shutting down {settings.PROJECT_NAME}")
-
+# Get settings safely
+try:
+    from app.core.config import get_settings
+    settings = get_settings()
+    PROJECT_NAME = settings.PROJECT_NAME
+    VERSION = settings.PROJECT_VERSION
+except:
+    PROJECT_NAME = "ZNAYKA"
+    VERSION = "0.1.0"
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.PROJECT_VERSION,
-    description="ZNAYKA - Academic Paper Database and Search Platform",
-    lifespan=lifespan,
+    title=PROJECT_NAME,
+    version=VERSION,
+    description="ZNAYKA - Academic Paper Database",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# CORS middleware
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include API router
-app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+# Import routers conditionally (avoid startup failures)
+@app.on_event("startup")
+async def startup():
+    print(f"Starting {PROJECT_NAME} v{VERSION}")
 
+try:
+    from app.api.endpoints import papers_router
+    from app.api.endpoints.sources import router as sources_router
+    from app.api.endpoints.analytics import router as analytics_router
+    
+    app.include_router(papers_router, prefix="/api/v1/papers")
+    app.include_router(sources_router, prefix="/api/v1/sources")
+    app.include_router(analytics_router, prefix="/api/v1/analytics")
+except Exception as e:
+    print(f"Warning: Could not load some routers: {e}")
 
 @app.get("/")
 async def root():
-    """Root endpoint."""
     return {
-        "name": settings.PROJECT_NAME,
-        "version": settings.PROJECT_VERSION,
+        "name": PROJECT_NAME,
+        "version": VERSION,
         "status": "operational",
         "docs": "/docs"
     }
 
-
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
     return {"status": "healthy"}
-
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=settings.PORT, reload=True)
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)

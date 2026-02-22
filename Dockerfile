@@ -6,23 +6,32 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for caching)
-COPY backend/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Copy and install requirements
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY backend/ /app/
+# Copy application
+COPY backend/ ./
 
-# Ensure Python can find the app
+# Set environment
+ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV PORT=8080
 
-# Create storage directory
+# Create storage
 RUN mkdir -p /app/storage/papers
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+echo "Starting ZNAYKA on port $PORT..."\n\
+cd /app\n\
+exec python -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8080}" --workers 1 --log-level info\n\
+' > /app/start.sh && chmod +x /app/start.sh
 
 EXPOSE 8080
 
-# Start with explicit python -m
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Use the startup script
+CMD ["/app/start.sh"]

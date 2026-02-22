@@ -1219,3 +1219,7 @@ SECRET_KEY
 PLANCK_URL
   Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
     For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+WARNING:  WatchFiles detected changes in 'app/main.py'. Reloading...
+INFO:     Started server process [28466]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
