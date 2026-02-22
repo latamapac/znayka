@@ -1,10 +1,16 @@
 """Main FastAPI application - Cloud Run optimized."""
 import os
 import sys
+import logging
 from pathlib import Path
 
-# Add parent directory to path
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Add paths
 sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # For crawlers
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,35 +33,41 @@ app.add_middleware(
 )
 
 # Import and register routers
-print("Loading API routers...")
+logger.info("Loading API routers...")
 
+# Sources router
 try:
     from app.api.endpoints.sources import router as sources_router
     app.include_router(sources_router, prefix="/api/v1/sources")
-    print("✓ Sources router loaded")
+    logger.info("✓ Sources router loaded at /api/v1/sources")
 except Exception as e:
-    print(f"✗ Sources router failed: {e}")
+    logger.error(f"✗ Sources router failed: {e}")
+    import traceback
+    logger.error(traceback.format_exc())
 
+# Papers router
 try:
     from app.api.endpoints.papers import router as papers_router
     app.include_router(papers_router, prefix="/api/v1/papers")
-    print("✓ Papers router loaded")
+    logger.info("✓ Papers router loaded at /api/v1/papers")
 except Exception as e:
-    print(f"✗ Papers router failed: {e}")
+    logger.error(f"✗ Papers router failed: {e}")
 
+# Analytics router
 try:
     from app.api.endpoints.analytics import router as analytics_router
     app.include_router(analytics_router, prefix="/api/v1/analytics")
-    print("✓ Analytics router loaded")
+    logger.info("✓ Analytics router loaded at /api/v1/analytics")
 except Exception as e:
-    print(f"✗ Analytics router failed: {e}")
+    logger.error(f"✗ Analytics router failed: {e}")
 
+# PDFs router (Phase 2)
 try:
     from app.api.endpoints.pdfs import router as pdfs_router
     app.include_router(pdfs_router, prefix="/api/v1/pdfs")
-    print("✓ PDFs router loaded")
+    logger.info("✓ PDFs router loaded at /api/v1/pdfs")
 except Exception as e:
-    print(f"✗ PDFs router failed: {e}")
+    logger.error(f"✗ PDFs router failed: {e}")
 
 @app.get("/")
 async def root():

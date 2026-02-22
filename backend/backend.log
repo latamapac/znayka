@@ -1263,3 +1263,96 @@ PLANCK_URL
 INFO:     Started server process [29949]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29949]
+Loading API routers...
+✗ Sources router failed: No module named 'crawlers'
+✗ Papers router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+✗ Analytics router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+✗ PDFs router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+INFO:app.main:Loading API routers...
+WARNING:root:Could not load papers router: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ERROR:app.main:✗ Sources router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ERROR:app.main:Traceback (most recent call last):
+  File "/Users/mark/russian-science-hub/backend/app/main.py", line 40, in <module>
+    from app.api.endpoints.sources import router as sources_router
+  File "/Users/mark/russian-science-hub/backend/app/api/endpoints/sources.py", line 6, in <module>
+    from crawlers.sources import SOURCE_METADATA, get_available_sources
+  File "/Users/mark/russian-science-hub/crawlers/sources/__init__.py", line 2, in <module>
+    from crawlers.sources.base import BaseCrawler, PaperData
+  File "/Users/mark/russian-science-hub/crawlers/sources/base.py", line 14, in <module>
+    settings = get_settings()
+               ^^^^^^^^^^^^^^
+  File "/Users/mark/russian-science-hub/backend/app/core/config.py", line 41, in get_settings
+    return Settings()
+           ^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pydantic_settings/main.py", line 194, in __init__
+    super().__init__(
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pydantic/main.py", line 250, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+
+ERROR:app.main:✗ Papers router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ERROR:app.main:✗ Analytics router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+ERROR:app.main:✗ PDFs router failed: 2 validation errors for Settings
+SECRET_KEY
+  Extra inputs are not permitted [type=extra_forbidden, input_value='your-secret-key-min-32-c...ng-change-in-production', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+PLANCK_URL
+  Extra inputs are not permitted [type=extra_forbidden, input_value='http://localhost:3001', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/extra_forbidden
+INFO:     Started server process [30151]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
