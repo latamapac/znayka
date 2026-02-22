@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Main continuous crawler - runs 24/7
+  crawler-main:
+    build:
+      context: .
+      dockerfile: Dockerfile.crawler
+    container_name: znayka-crawler-main
+    restart: unless-stopped
+    environment:
+      - API_URL=https://znayka-674193695957.europe-north1.run.app
+      - CRAWLER_ID=main
+    volumes:
+      - crawler-data:/app/data
+      - ./logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Secondary crawler - handles specific sources
+  crawler-sources:
+    build:
+      context: .
+      dockerfile: Dockerfile.crawler
+    container_name: znayka-crawler-sources
+    restart: unless-stopped
+    environment:
+      - API_URL=https://znayka-674193695957.europe-north1.run.app
+      - CRAWLER_ID=sources
+    volumes:
+      - crawler-data:/app/data
+      - ./logs:/app/logs
+    command: >
+      sh -c "
+        python backend/app/continuous_crawler.py 
+        --queries 'physics' 'mathematics' 'biology' 'chemistry'
+        --limit 500
+        --load-progress
+      "
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Background processor - handles PDFs and text extraction
+  processor:
+    build:
+      context: .
+      dockerfile: Dockerfile.crawler
+    container_name: znayka-processor
+    restart: unless-stopped
+    environment:
+      - API_URL=https://znayka-674193695957.europe-north1.run.app
+    volumes:
+      - crawler-data:/app/data
+      - ./logs:/app/logs
+    command: >
+      sh -c "
+        echo 'Starting background processor...' &&
+        while true; do
+          curl -s $API_URL/api/v1/worker/maintenance
+          sleep 300
+done
+      "
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Monitor - tracks stats and alerts
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.crawler
+    container_name: znayka-monitor
+    restart: unless-stopped
+    environment:
+      - API_URL=https://znayka-674193695957.europe-north1.run.app
+    volumes:
+      - ./logs:/app/logs
+    command: >
+      sh -c "
+        echo 'Starting monitor...' &&
+        while true; do
+          echo \"[$$(date)] Checking stats...\" &&
+          curl -s $API_URL/api/v1/papers/stats/index | python3 -c 'import sys,json; d=json.load(sys.stdin); print(f\"Papers: {d.get(\"total_papers\", 0):,}\")' &&
+          sleep 60
+done
+      "
+
+volumes:
+  crawler-data:
+    driver: local

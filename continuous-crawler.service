@@ -1,0 +1,28 @@
+[Unit]
+Description=ZNAYKA Continuous Crawler - 24/7 Academic Paper Collection
+After=network.target
+
+[Service]
+Type=simple
+User=znayka
+WorkingDirectory=/opt/znayka
+Environment=PYTHONPATH=/opt/znayka/backend
+Environment=API_URL=https://znayka-674193695957.europe-north1.run.app
+
+# Run the continuous crawler
+ExecStart=/opt/znayka/venv/bin/python backend/app/continuous_crawler.py --load-progress
+
+# Restart on failure
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/znayka/crawler.log
+StandardError=append:/var/log/znayka/crawler-error.log
+
+# Resource limits
+MemoryLimit=1G
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target
