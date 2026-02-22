@@ -18,43 +18,19 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-# Check if Temporal is enabled
-USE_TEMPORAL = os.getenv("USE_TEMPORAL", "false").lower() == "true"
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    # Startup
     print(f"Starting {settings.PROJECT_NAME} v{settings.PROJECT_VERSION}")
-    
-    # Start Temporal worker if enabled
-    worker_manager = None
-    if USE_TEMPORAL:
-        try:
-            from app.temporal.worker import worker_manager
-            await worker_manager.start()
-            print("Temporal worker started")
-        except Exception as e:
-            print(f"Failed to start Temporal worker: {e}")
-    
     yield
-    
-    # Shutdown
-    if USE_TEMPORAL and worker_manager:
-        try:
-            await worker_manager.stop()
-            print("Temporal worker stopped")
-        except Exception as e:
-            print(f"Error stopping Temporal worker: {e}")
-    
     print(f"Shutting down {settings.PROJECT_NAME}")
 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
-    description="Russian Science Hub - Academic Paper Database and Search Platform",
+    description="ZNAYKA - Academic Paper Database and Search Platform",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -80,8 +56,7 @@ async def root():
         "name": settings.PROJECT_NAME,
         "version": settings.PROJECT_VERSION,
         "status": "operational",
-        "docs": "/docs",
-        "temporal_enabled": USE_TEMPORAL
+        "docs": "/docs"
     }
 
 
