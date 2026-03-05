@@ -4,13 +4,24 @@ Bypasses eLibrary.ru's IP-based access restrictions by discovering papers
 through Google Scholar (site:elibrary.ru), which returns titles, authors,
 journals, citation counts, eLibrary IDs, and direct PDF URLs.
 
+Supports rotating proxy pool for high-volume crawling (50K+/day).
+
 Usage:
+    # Without proxies (direct, ~100-500 requests before CAPTCHA)
     async with ElibraryScholarCrawler() as crawler:
         async for paper in crawler.search_papers("машинное обучение", limit=50):
             print(paper.title, paper.source_id)
+
+    # With proxy rotation (scales to 50K+/day)
+    from crawlers.proxy_rotator import ProxyRotator
+    rotator = ProxyRotator(["socks5://u:p@host1:1080", "http://u:p@host2:8080"])
+    async with ElibraryScholarCrawler(proxy_rotator=rotator) as crawler:
+        async for paper in crawler.search_papers("нейронные сети", limit=10000):
+            print(paper.title)
 """
 import asyncio
 import logging
+import os
 import random
 import re
 import time
@@ -20,6 +31,7 @@ from urllib.parse import quote_plus, urlencode
 from scrapling import Fetcher
 from scrapling.parser import Adaptor
 
+from crawlers.proxy_rotator import ProxyRotator
 from crawlers.sources.base import BaseCrawler, PaperData
 
 logger = logging.getLogger(__name__)
@@ -30,21 +42,56 @@ _MAX_DELAY = 6.0
 _CAPTCHA_BACKOFF = 30.0
 _MAX_CAPTCHA_RETRIES = 3
 
+# With proxies we can be more aggressive
+_PROXY_DELAY = 1.0
+_PROXY_MAX_DELAY = 2.0
+
 
 class ElibraryScholarCrawler(BaseCrawler):
-    """Discover eLibrary.ru papers via Google Scholar scraping with Scrapling."""
+    """Discover eLibrary.ru papers via Google Scholar scraping with Scrapling.
+
+    When a ProxyRotator is provided (or PROXY_LIST env var is set), requests
+    are distributed across the proxy pool with per-proxy health tracking.
+    Banned proxies are automatically cooled down while healthy ones continue.
+    """
 
     SOURCE_NAME = "eLibrary_Scholar"
     SOURCE_CODE = "ELSC"
     BASE_URL = "https://scholar.google.com"
 
-    def __init__(self, delay: Optional[float] = None):
-        super().__init__(delay=delay or _MIN_DELAY)
+    def __init__(
+        self,
+        delay: Optional[float] = None,
+        proxy_rotator: Optional[ProxyRotator] = None,
+    ):
+        self._proxy_rotator = proxy_rotator
+        # Use shorter delays when proxies are available
+        if self._proxy_rotator:
+            default_delay = _PROXY_DELAY
+        else:
+            default_delay = _MIN_DELAY
+        super().__init__(delay=delay or default_delay)
         self._fetcher: Optional[Fetcher] = None
         self._request_count = 0
 
     async def __aenter__(self):
         self._fetcher = Fetcher()
+
+        # Auto-load proxies from env if none provided
+        if self._proxy_rotator is None:
+            self._proxy_rotator = ProxyRotator.from_env("PROXY_LIST")
+            if self._proxy_rotator is None:
+                proxy_file = os.getenv("PROXY_FILE", "").strip()
+                if proxy_file:
+                    self._proxy_rotator = ProxyRotator.from_file(proxy_file)
+
+        if self._proxy_rotator:
+            logger.info(
+                f"Scholar crawler using {self._proxy_rotator.pool_size} proxies"
+            )
+            # Use shorter delay with proxies
+            self.delay = min(self.delay, _PROXY_DELAY)
+
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -55,40 +102,82 @@ class ElibraryScholarCrawler(BaseCrawler):
     # ------------------------------------------------------------------
 
     def _fetch_scholar(self, url: str) -> Optional[Adaptor]:
-        """Fetch a Google Scholar page. Returns parsed page or None."""
-        for attempt in range(_MAX_CAPTCHA_RETRIES):
+        """Fetch a Google Scholar page. Returns parsed page or None.
+
+        With proxy rotation: cycles through proxies, reports health,
+        and retries with different proxies on failure/CAPTCHA.
+        """
+        max_attempts = (
+            _MAX_CAPTCHA_RETRIES * self._proxy_rotator.pool_size
+            if self._proxy_rotator
+            else _MAX_CAPTCHA_RETRIES
+        )
+        # Cap at reasonable maximum
+        max_attempts = min(max_attempts, 15)
+
+        for attempt in range(max_attempts):
             # Rate limit with jitter
             if self._request_count > 0:
-                delay = random.uniform(self.delay, self.delay * 2)
+                jitter_max = _PROXY_MAX_DELAY if self._proxy_rotator else self.delay * 2
+                delay = random.uniform(self.delay, jitter_max)
                 time.sleep(delay)
             self._request_count += 1
 
+            # Select proxy
+            proxy_url = None
+            if self._proxy_rotator:
+                proxy_url = self._proxy_rotator.get_proxy()
+                if proxy_url:
+                    logger.debug(f"Using proxy: {ProxyRotator._mask(proxy_url)}")
+
             try:
-                page = self._fetcher.get(url)
+                if proxy_url:
+                    page = self._fetcher.get(url, proxy=proxy_url)
+                else:
+                    page = self._fetcher.get(url)
             except Exception as e:
-                logger.error(f"Fetch error: {e}")
-                return None
+                logger.error(f"Fetch error (attempt {attempt + 1}): {e}")
+                if proxy_url and self._proxy_rotator:
+                    self._proxy_rotator.report_failure(proxy_url)
+                if not self._proxy_rotator:
+                    return None
+                continue
 
             if page.status == 200:
                 body = str(page.body)
                 if "unusual traffic" in body.lower() or "/sorry/" in body.lower():
                     logger.warning(
-                        f"CAPTCHA detected (attempt {attempt + 1}), "
-                        f"backing off {_CAPTCHA_BACKOFF}s"
+                        f"CAPTCHA detected (attempt {attempt + 1})"
                     )
-                    time.sleep(_CAPTCHA_BACKOFF * (attempt + 1))
-                    continue
+                    if proxy_url and self._proxy_rotator:
+                        # Ban this proxy, try another immediately
+                        self._proxy_rotator.report_ban(proxy_url)
+                        continue
+                    else:
+                        # No proxies — back off
+                        time.sleep(_CAPTCHA_BACKOFF * (attempt + 1))
+                        continue
+
+                # Success
+                if proxy_url and self._proxy_rotator:
+                    self._proxy_rotator.report_success(proxy_url)
                 return page
 
             if page.status == 429:
-                logger.warning(f"Rate limited (429), backing off {_CAPTCHA_BACKOFF}s")
-                time.sleep(_CAPTCHA_BACKOFF * (attempt + 1))
-                continue
+                logger.warning(f"Rate limited (429), attempt {attempt + 1}")
+                if proxy_url and self._proxy_rotator:
+                    self._proxy_rotator.report_ban(proxy_url)
+                    continue
+                else:
+                    time.sleep(_CAPTCHA_BACKOFF * (attempt + 1))
+                    continue
 
             logger.warning(f"HTTP {page.status} for {url}")
+            if proxy_url and self._proxy_rotator:
+                self._proxy_rotator.report_failure(proxy_url)
             return page
 
-        logger.error(f"Failed after {_MAX_CAPTCHA_RETRIES} captcha retries: {url}")
+        logger.error(f"Failed after {max_attempts} attempts: {url}")
         return None
 
     async def _async_fetch(self, url: str) -> Optional[Adaptor]:
@@ -159,6 +248,15 @@ class ElibraryScholarCrawler(BaseCrawler):
                 break
 
             start += page_size
+
+            # Log proxy stats periodically
+            if self._proxy_rotator and start % 100 == 0:
+                stats = self._proxy_rotator.get_stats()
+                available = sum(1 for s in stats if s["available"])
+                logger.info(
+                    f"Proxy pool: {available}/{len(stats)} available, "
+                    f"papers so far: {papers_found}"
+                )
 
         logger.info(f"Scholar crawl complete: {papers_found} papers found")
 
