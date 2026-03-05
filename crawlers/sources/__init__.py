@@ -9,6 +9,7 @@ from crawlers.sources.inion import INIONCrawler
 from crawlers.sources.hse_scientometrics import HSEScientometricsCrawler
 from crawlers.sources.presidential_library import PresidentialLibraryCrawler
 from crawlers.sources.rosstat_emiss import RosstatEMISSCrawler
+from crawlers.sources.elibrary_scholar import ElibraryScholarCrawler
 
 __all__ = [
     "BaseCrawler",
@@ -22,6 +23,7 @@ __all__ = [
     "HSEScientometricsCrawler",
     "PresidentialLibraryCrawler",
     "RosstatEMISSCrawler",
+    "ElibraryScholarCrawler",
 ]
 
 # Registry of all available crawlers
@@ -35,6 +37,7 @@ CRAWLER_REGISTRY = {
     "hse_scientometrics": HSEScientometricsCrawler,
     "presidential_library": PresidentialLibraryCrawler,
     "rosstat": RosstatEMISSCrawler,
+    "elibrary_scholar": ElibraryScholarCrawler,
 }
 
 # Source metadata for UI/documentation
@@ -117,6 +120,15 @@ SOURCE_METADATA = {
         "description": "Федеральная служба государственной статистики",
         "url": "https://rosstat.gov.ru",
         "type": "government",
+        "language": "ru",
+        "has_fulltext": True,
+    },
+    "elibrary_scholar": {
+        "name": "eLibrary (via Scholar)",
+        "name_ru": "eLibrary (через Google Scholar)",
+        "description": "Поиск статей eLibrary.ru через Google Scholar — обход блокировки по IP",
+        "url": "https://elibrary.ru",
+        "type": "academic",
         "language": "ru",
         "has_fulltext": True,
     },
